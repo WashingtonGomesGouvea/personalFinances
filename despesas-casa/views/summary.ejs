@@ -1,0 +1,240 @@
+<!-- summary.ejs -->
+<% title = 'Resumo de Pagamentos' %>
+
+<h1 class="mb-4">Resumo de Pagamentos</h1>
+
+<!-- Formulário de filtro -->
+<form method="GET" action="/summary" class="row g-3 mb-4">
+  <div class="col-auto">
+    <label for="month" class="visually-hidden">Mês</label>
+    <select name="month" id="month" class="form-select">
+      <% for (let m = 1; m <= 12; m++) { %>
+        <option value="<%= m %>" <%= m === month ? 'selected' : '' %>><%= m %></option>
+      <% } %>
+    </select>
+  </div>
+  <div class="col-auto">
+    <label for="year" class="visually-hidden">Ano</label>
+    <input type="number" name="year" id="year" class="form-control" value="<%= year %>" min="2000" max="2100" />
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-primary mb-3">Filtrar</button>
+  </div>
+</form>
+
+<!-- Botão para abrir o modal de adição -->
+<button type="button" class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+  Adicionar Despesa
+</button>
+
+<h2 class="mb-4">Mês <%= month %>/<%= year %>:</h2>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Categoria</th>
+      <th>Descrição</th>
+      <th>Valor (R$)</th>
+      <th>Data</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% expenses.forEach(function (expense) { %>
+    <tr>
+      <td>
+        <% if (expense.category === 'Água') { %>
+        💧 Água
+        <% } else if (expense.category === 'Energia') { %>
+        ⚡ Energia
+        <% } else if (expense.category === 'Aluguel') { %>
+        🏠 Aluguel
+        <% } else if (expense.category === 'Internet') { %>
+        🌐 Internet
+        <% } else { %>
+        <%= expense.category %>
+        <% } %>
+      </td>
+      <td><%= expense.name %></td>
+      <td>R$ <%= expense.amount.toFixed(2) %></td>
+      <td><%= new Date(expense.date).toLocaleDateString() %></td>
+      <td>
+        <a href="/edit/<%= expense._id %>?month=<%= month %>&year=<%= year %>" class="btn btn-sm btn-primary">Editar</a>
+        <form action="/delete/<%= expense._id %>?month=<%= month %>&year=<%= year %>" method="POST" style="display:inline;">
+          <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir esta despesa?');">Excluir</button>
+        </form>
+      </td>
+    </tr>
+    <% }); %>
+  </tbody>
+</table>
+<h3>Total: R$ <%= total.toFixed(2) %></h3>
+
+<!-- Canvas para o gráfico de despesas por categoria -->
+<canvas id="expensesChart" width="600" height="400"></canvas>
+
+<!-- Canvas para o gráfico de total de despesas do mês -->
+<canvas id="dailyExpensesChart" width="600" height="400" class="mt-4"></canvas>
+
+<!-- Modal para Adicionar Despesa -->
+<div class="modal fade" id="addExpenseModal" tabindex="-1" aria-labelledby="addExpenseModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/add?redirect=summary&month=<%= month %>&year=<%= year %>" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addExpenseModalLabel">Adicionar Nova Despesa</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Campos do formulário de adição de despesa -->
+          <div class="mb-3">
+            <label class="form-label">Descrição:</label>
+            <input type="text" name="name" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Valor (R$):</label>
+            <input type="number" step="0.01" name="amount" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Data:</label>
+            <input type="date" name="date" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Categoria:</label>
+            <select name="category" class="form-select" required>
+              <option value="Água">Água</option>
+              <option value="Energia">Energia</option>
+              <option value="Aluguel">Aluguel</option>
+              <option value="Internet">Internet</option>
+              <!-- Adicione mais categorias se necessário -->
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Adicionar Despesa</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Incluir o Chart.js versão 2.9.4 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+
+<!-- Script para gerar os gráficos -->
+<script>
+  const expensesData = JSON.parse('<%= JSON.stringify(expenses) %>');
+  console.log('Dados das despesas:', expensesData);
+
+  if (expensesData.length > 0) {
+    // Gráfico de Despesas por Categoria
+    const categories = {};
+    expensesData.forEach(expense => {
+      const category = expense.category;
+      if (categories[category]) {
+        categories[category] += expense.amount;
+      } else {
+        categories[category] = expense.amount;
+      }
+    });
+
+    // Dados para o Gráfico de Despesas por Categoria
+    const categoryData = {
+      labels: Object.keys(categories),
+      datasets: [{
+        label: 'Despesas por Categoria',
+        data: Object.values(categories),
+        backgroundColor: [
+          '#FF6384',
+          '#36A2EB',
+          '#FFCE56',
+          '#4BC0C0',
+          '#9966FF',
+          '#FF9F40'
+          // Adicione mais cores se houver mais categorias
+        ],
+        borderColor: '#fff',
+        borderWidth: 1
+      }]
+    };
+
+    // Gráfico de Total de Despesas do Mês
+    const dailyTotals = {};
+    expensesData.forEach(expense => {
+      const date = new Date(expense.date);
+      const day = date.getDate();
+      if (dailyTotals[day]) {
+        dailyTotals[day] += expense.amount;
+      } else {
+        dailyTotals[day] = expense.amount;
+      }
+    });
+
+    // Ordenar os dias
+    const days = Object.keys(dailyTotals).map(Number).sort((a, b) => a - b);
+
+    // Dados para o Gráfico de Total de Despesas do Mês
+    const dailyData = {
+      labels: days,
+      datasets: [{
+        label: 'Total de Despesas por Dia',
+        data: days.map(day => dailyTotals[day]),
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        fill: true,
+        lineTension: 0.1
+      }]
+    };
+
+    // Configurações do Gráfico de Despesas por Categoria
+    const categoryConfig = {
+      type: 'pie',
+      data: categoryData,
+      options: {
+        responsive: true
+      }
+    };
+
+    // Configurações do Gráfico de Total de Despesas do Mês
+    const dailyConfig = {
+      type: 'line',
+      data: dailyData,
+      options: {
+        responsive: true,
+        scales: {
+          xAxes: [{
+            display: true,
+            scaleLabel: {
+              display: true,
+              labelString: 'Dia do Mês'
+            }
+          }],
+          yAxes: [{
+            display: true,
+            scaleLabel: {
+              display: true,
+              labelString: 'Total de Despesas (R$)'
+            }
+          }]
+        }
+      }
+    };
+
+    // Renderizar o Gráfico de Despesas por Categoria
+    const ctxCategory = document.getElementById('expensesChart').getContext('2d');
+    const expensesChart = new Chart(ctxCategory, categoryConfig);
+
+    // Renderizar o Gráfico de Total de Despesas do Mês
+    const ctxDaily = document.getElementById('dailyExpensesChart').getContext('2d');
+    const dailyExpensesChart = new Chart(ctxDaily, dailyConfig);
+  } else {
+    document.getElementById('expensesChart').style.display = 'none';
+    document.getElementById('dailyExpensesChart').style.display = 'none';
+    // Opcional: Exibir uma mensagem para o usuário
+    // alert('Não há despesas para o período selecionado.');
+  }
+</script>
+
+<!-- Scripts necessários para o Bootstrap (certifique-se de que estão incluídos no layout ou aqui) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

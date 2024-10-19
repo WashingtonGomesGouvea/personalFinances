@@ -1,0 +1,91 @@
+<!-- index.ejs -->
+<% title = 'Despesas da Casa' %>
+
+<h1 class="text-center mb-4">Bem-vindo ao Gerenciador de Despesas da Casa</h1>
+
+<!-- Canvas para o gráfico -->
+<canvas id="expenseChart" width="600" height="400"></canvas>
+
+<!-- Estilos CSS -->
+<style>
+  #expenseChart {
+    max-width: 600px;
+    margin: 20px auto; /* Centraliza e adiciona margem superior e inferior */
+  }
+</style>
+
+<!-- Incluir o Chart.js versão 2.9.4 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+
+<script>
+  // Dados das despesas mensais passados pelo servidor
+  const monthlyExpenses = JSON.parse('<%- JSON.stringify(monthlyExpenses || {}) %>');
+
+  // Debugging: Verificando os dados no console
+  console.log("Despesas Mensais:", monthlyExpenses);
+
+  // Verifica se há dados para exibir no gráfico
+  if (Object.keys(monthlyExpenses).length > 0) {
+    const labels = Object.keys(monthlyExpenses);
+    const data = Object.values(monthlyExpenses);
+
+    // Definir cores para cada barra
+    const backgroundColors = [
+      'rgba(255, 99, 132, 0.2)', // Vermelho
+      'rgba(54, 162, 235, 0.2)', // Azul
+      'rgba(255, 206, 86, 0.2)', // Amarelo
+      'rgba(75, 192, 192, 0.2)', // Verde
+      'rgba(153, 102, 255, 0.2)', // Roxo
+      'rgba(255, 159, 64, 0.2)', // Laranja
+      // Adicione mais cores se necessário
+    ];
+
+    const borderColors = [
+      'rgba(255, 99, 132, 1)', // Vermelho
+      'rgba(54, 162, 235, 1)', // Azul
+      'rgba(255, 206, 86, 1)', // Amarelo
+      'rgba(75, 192, 192, 1)', // Verde
+      'rgba(153, 102, 255, 1)', // Roxo
+      'rgba(255, 159, 64, 1)', // Laranja
+      // Adicione mais cores se necessário
+    ];
+
+    // Ajustar o número de cores ao número de barras
+    while (backgroundColors.length < data.length) {
+      backgroundColors.push('rgba(0, 0, 0, 0.2)'); // Cor adicional
+      borderColors.push('rgba(0, 0, 0, 1)'); // Borda adicional
+    }
+
+    const ctx = document.getElementById('expenseChart').getContext('2d');
+    const expenseChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Despesas por Mês',
+          data: data,
+          backgroundColor: backgroundColors,
+          borderColor: borderColors,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false, // Permite que o gráfico se ajuste ao tamanho do canvas
+        scales: {
+          yAxes: [{
+            ticks: {
+              beginAtZero: true
+            }
+          }]
+        },
+        title: {
+          display: true,
+          text: 'Despesas Mensais'
+        }
+      }
+    });
+  } else {
+    console.log("Nenhuma despesa encontrada para exibir no gráfico.");
+  }
+</script>

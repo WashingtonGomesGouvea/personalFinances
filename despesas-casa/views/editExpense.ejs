@@ -1,0 +1,30 @@
+<!-- editExpense.ejs -->
+<% title = 'Editar Despesa' %>
+
+<h1 class="mb-4">Editar Despesa</h1>
+<form action="/edit/<%= expense._id %>?month=<%= month %>&year=<%= year %>" method="POST">
+  <div class="mb-3">
+    <label class="form-label">Descrição:</label>
+    <input type="text" name="name" class="form-control" value="<%= expense.name %>" required />
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Valor (R$):</label>
+    <input type="number" step="0.01" name="amount" class="form-control" value="<%= expense.amount %>" required />
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Data:</label>
+    <input type="date" name="date" class="form-control" value="<%= expense.date.toISOString().substring(0, 10) %>" required />
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Categoria:</label>
+    <select name="category" class="form-select" required>
+      <option value="Água" <%= expense.category === 'Água' ? 'selected' : '' %>>Água</option>
+      <option value="Energia" <%= expense.category === 'Energia' ? 'selected' : '' %>>Energia</option>
+      <option value="Aluguel" <%= expense.category === 'Aluguel' ? 'selected' : '' %>>Aluguel</option>
+      <option value="Internet" <%= expense.category === 'Internet' ? 'selected' : '' %>>Internet</option>
+      <!-- Adicione mais categorias se necessário -->
+    </select>
+  </div>
+  <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+  <a href="/summary?month=<%= month %>&year=<%= year %>" class="btn btn-secondary">Cancelar</a>
+</form>
