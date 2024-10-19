@@ -1,4 +1,4 @@
-// app.js
+// api/index.js
 
 require('dotenv').config(); // Para usar variáveis de ambiente
 
@@ -6,6 +6,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const expressLayouts = require('express-ejs-layouts');
+const path = require('path'); // Adicionado para manipular caminhos de diretório
+
 const app = express();
 
 // Conexão com o MongoDB usando variável de ambiente para a URI
@@ -32,7 +34,11 @@ app.use(expressLayouts);
 app.set('view engine', 'ejs');
 app.set('layout', 'layout');
 
-// Rotas
+// Ajustar o caminho para as views
+app.set('views', path.join(__dirname, '../views'));
+
+// Ajustar o caminho para os arquivos estáticos
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Função auxiliar para agrupar despesas por mês e ano
 const groupExpensesByMonth = (expenses) => {
@@ -51,6 +57,8 @@ const groupExpensesByMonth = (expenses) => {
 
   return monthlyExpenses;
 };
+
+// Rotas
 
 // Rota para a página inicial
 app.get('/', async (req, res) => {
@@ -191,7 +199,8 @@ app.post('/delete/:id', async (req, res) => {
 });
 
 // Middleware para servir arquivos estáticos (mantenha depois das rotas)
-app.use(express.static('public'));
+// Ajustado para o novo caminho
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Exportar o aplicativo
 module.exports = app;
