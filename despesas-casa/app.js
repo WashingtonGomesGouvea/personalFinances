@@ -34,6 +34,24 @@ app.set('layout', 'layout');
 
 // Rotas
 
+// Função auxiliar para agrupar despesas por mês e ano
+const groupExpensesByMonth = (expenses) => {
+  const monthlyExpenses = {};
+
+  expenses.forEach(expense => {
+    const month = expense.date.getMonth() + 1; // Mês de 1 a 12
+    const year = expense.date.getFullYear();
+    const key = `${month}/${year}`;
+
+    if (!monthlyExpenses[key]) {
+      monthlyExpenses[key] = 0;
+    }
+    monthlyExpenses[key] += expense.amount;
+  });
+
+  return monthlyExpenses;
+};
+
 // Rota para a página inicial
 app.get('/', async (req, res) => {
   try {
@@ -172,29 +190,8 @@ app.post('/delete/:id', async (req, res) => {
   }
 });
 
-// Função auxiliar para agrupar despesas por mês e ano
-function groupExpensesByMonth(expenses) {
-  const monthlyExpenses = {};
-
-  expenses.forEach(expense => {
-    const month = expense.date.getMonth() + 1; // Mês de 1 a 12
-    const year = expense.date.getFullYear();
-    const key = `${month}/${year}`;
-
-    if (!monthlyExpenses[key]) {
-      monthlyExpenses[key] = 0;
-    }
-    monthlyExpenses[key] += expense.amount;
-  });
-
-  return monthlyExpenses;
-}
-
-// Middleware para servir arquivos estáticos (depois das rotas)
+// Middleware para servir arquivos estáticos (mantenha depois das rotas)
 app.use(express.static('public'));
 
-// Iniciar o servidor
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor iniciado na porta ${PORT}`);
-});
+// Exportar o aplicativo
+module.exports = app;
